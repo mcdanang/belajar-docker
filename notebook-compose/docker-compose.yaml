@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  postgres-responder:
+    image: postgres:latest
+    container_name: postgres-responder
+    env_file:
+      - .env
+    ports:
+      - 5434:5432
+    volumes:
+      - volume-responder:/var/lib/postgresql/data
+      - ./data-responder/responders.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      app-network:
+        aliases:
+          - postgres
+  notebook-analysis:
+    image: jupyter/minimal-notebook:latest
+    container_name: notebook-analysis
+    ports:
+      - 8888:8888
+    depends_on:
+      - postgres-responder
+    volumes:
+      - ./credit-score:/home/jovyan/work
+    command: bash -c "pip install -r /home/jovyan/work/requirements.txt && jupyter notebook"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    name: app-network
+
+volumes:
+  volume-responder:
+    name: volume-responder
